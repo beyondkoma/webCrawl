@@ -12,7 +12,7 @@ from multiprocessing import Process, Queue
 file_path = "/home/beyondkoma/work/gitProject/webCrawl/images/test.html"
 base_url = "http://v.comicbus.com/online/comic-103.html?ch=1"
 dst_path = "/home/beyondkoma/work/gitProject/webCrawl/images/"
-
+page = 103
 
 # r = requests.post("http://v.comicbus.com/online/comic-103.html?ch=1", data={'id': 'next'})
 # r.encoding = 'big5'
@@ -27,7 +27,6 @@ def init_web_engine():
 
 
 def gen_img_url_task(webdriver):
-    page = 103
     for num in range(1, page+1):
         if num != 1:
             new_url = base_url + '-' + str(num)
@@ -88,10 +87,15 @@ def down_img_by_url(url, dst_path):
 
 def down_worker(img_url_tasks):
     print("current process is {}, the parent process is {}".format(os.getpid(), os.getppid()))
+    img_count = 0
     while True:
         print("current total img urls is {}".format(img_url_tasks.qsize()))
         img_url = img_url_tasks.get()
         down_img_by_url(img_url, dst_path)
+        img_count += 1
+        if img_count == page:
+            print("down_worker has finished the download tasks")
+            break
         if img_url_tasks.empty():
             time.sleep(5)
 
