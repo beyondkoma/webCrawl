@@ -1,9 +1,11 @@
 # coding=utf-8
 
 from multiprocessing import Process
+import logging
 import os
 import re
 import asyncio
+import queue
 
 import aiohttp
 
@@ -11,21 +13,36 @@ import aiohttp
 class CrawlWork(Process):
     def __init__(self, task_queue):
             super(CrawlWork, self).__init__()
+            self.init_log()
+            self.log.info("start log system")
             self.task_queue = task_queue
             self.dst_path = "/home/beyondkoma/work/gitProject/webCrawl/images/"
 
+    def init_log(self):
+        logging.basicConfig(level=logging.INFO,
+                            format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
+                            datefmt='%a, %d %b %Y %H:%M:%S',
+                            filename='crawl.log',
+                            filemode='a')
+        self.log = logging.getLogger("crawl")
+        return
+
     def run(self):
+            self.log.info("start run log system")
             loop = asyncio.get_event_loop()
             task = asyncio.ensure_future(self.process_crawl_tasks())
             loop.run_until_complete(task)
-            print('CrawlWork ret:', task.result())
+            self.log.info("CrawlWork ret:{}".format(task.result()))
 
     async def process_crawl_tasks(self):
         while True:
-            if not self.task_queue.empty():
-                (base_url, page, img_url) = self.task_queue.get()
+            try:
+                self.log.info("try to get task")
+                (base_url, page, img_url) = self.task_queue.get_nowait()
+                self.log.info("the crawl info is {}, {}, {}".format(base_url, page, img_url))
                 await self.down_img_by_url(img_url, self.dst_path)
-            else:
+                self.log.info("finish download task")
+            except queue.Empty:
                 await asyncio.sleep(3)
         return True
 

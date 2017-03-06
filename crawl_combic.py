@@ -19,29 +19,30 @@ dst_path = "/home/beyondkoma/work/gitProject/webCrawl/images/"
 #         f.write(r.text)
 # img_url_tasks = Queue()
 
+# 进程队列
+crawl_tasks = Queue()
 
-# 线程队列
-workQueue = queue.Queue()
 
-
-def analyse_url():
-    while not workQueue.empty():
-        task_url = workQueue.get()
+def analyse_url(thread_queue):
+    while not thread_queue.empty():
+        task_url = thread_queue.get()
         print("the img is {}".format(task_url[2]))
         crawl_tasks.put(task_url)
 
 
 if __name__ == '__main__':
+    print("start crawl combic")
+    # 线程队列
+    thread_queue = queue.Queue()
     thread_num = 1
     page = 20
     for num in range(thread_num):
-        thread = RenderWork(num, base_url, page, workQueue)
+        thread = RenderWork(num, base_url, page, thread_queue)
         thread.start()
 
-    # 进程队列
-    crawl_tasks = Queue()
-    analyse_url()
+    analyse_url(thread_queue)
     # start crawl process
-    crawl_process = CrawlWork(workQueue)
+    print("start crawl process")
+    crawl_process = CrawlWork(crawl_tasks)
     crawl_process.start()
     crawl_process.join()
