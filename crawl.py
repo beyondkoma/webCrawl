@@ -37,11 +37,9 @@ class CrawlWork(Process):
     async def process_crawl_tasks(self):
         while True:
             try:
-                self.log.info("try to get task")
                 (base_url, page, img_url) = self.task_queue.get_nowait()
-                self.log.info("the crawl info is {}, {}, {}".format(base_url, page, img_url))
+                self.log.info("the cur crawl info is {}, {}, {}".format(base_url, page, img_url))
                 await self.down_img_by_url(img_url, self.dst_path)
-                self.log.info("finish download task")
             except queue.Empty:
                 await asyncio.sleep(3)
         return True
@@ -51,13 +49,16 @@ class CrawlWork(Process):
             os.mkdir(dst_path)
         filename = re.split("/|//", img_url)
         osfile = dst_path + filename[len(filename)-1]
-        max_bytes = 1024
+        chunk_size = 1024
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.get(img_url) as resp:
-                    with open(osfile, 'wb') as f:
-                        async for chunk in resp.content.iter_content(max_bytes):
-                            f.write(resp)
+                    with open(osfile, 'wb') as fd:
+                        while True:
+                            chunk = await resp.content.read(chunk_size)
+                            if not chunk:
+                                break
+                            fd.write(chunk)
         except Exception:
             print('download img happens exception', img_url)
             return False

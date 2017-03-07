@@ -2,6 +2,8 @@
 
 from multiprocessing import Queue
 import queue
+import time
+import ConfigParser
 
 from render import RenderWork
 from crawl import CrawlWork
@@ -24,14 +26,22 @@ crawl_tasks = Queue()
 
 
 def analyse_url(thread_queue):
-    while not thread_queue.empty():
-        task_url = thread_queue.get()
-        print("the img is {}".format(task_url[2]))
-        crawl_tasks.put(task_url)
+    while True:
+        while not thread_queue.empty():
+            task_url = thread_queue.get()
+            print("the img is {}".format(task_url[2]))
+            crawl_tasks.put(task_url)
+        time.sleep(1)
 
 
 if __name__ == '__main__':
     print("start crawl combic")
+    cf = ConfigParser.ConfigParser()
+    cf.read("config.ini")
+    for k, v in cf.items("urls"):
+        l = v.split(',')
+        print(l[0], int(l[1])+10)
+
     # 线程队列
     thread_queue = queue.Queue()
     thread_num = 1
@@ -40,9 +50,9 @@ if __name__ == '__main__':
         thread = RenderWork(num, base_url, page, thread_queue)
         thread.start()
 
-    analyse_url(thread_queue)
     # start crawl process
     print("start crawl process")
     crawl_process = CrawlWork(crawl_tasks)
     crawl_process.start()
+    analyse_url(thread_queue)
     crawl_process.join()

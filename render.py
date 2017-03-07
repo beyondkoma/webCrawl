@@ -50,5 +50,4 @@ class RenderWork(threading.Thread):
                         return img_src['src']
                     else:
                         return None
-                        # with open(file_path, "w") as f:
-                        #     f.write(webdriver.page_source)
+            return None
