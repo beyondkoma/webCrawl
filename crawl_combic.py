@@ -3,7 +3,9 @@
 from multiprocessing import Queue
 import queue
 import time
+import functools
 import ConfigParser
+
 
 from render import RenderWork
 from crawl import CrawlWork
@@ -23,6 +25,8 @@ dst_path = "/home/beyondkoma/work/gitProject/webCrawl/images/"
 
 # 进程队列
 crawl_tasks = Queue()
+# 线程队列
+thread_queue = queue.Queue()
 
 
 def analyse_url(thread_queue):
@@ -34,22 +38,23 @@ def analyse_url(thread_queue):
         time.sleep(1)
 
 
+def assign_thread_tasks(url_tasks):
+    for num, cur_url_task in enumerate(url_tasks):
+        thread = RenderWork(num, cur_url_task[0], int(cur_url_task[1]), thread_queue)
+        thread.start()
+        print("start crawl thread {}, handle the combic url {}".format(num, cur_url_task[0]))
+
+
 if __name__ == '__main__':
     print("start crawl combic")
+    url_tasks = []
     cf = ConfigParser.ConfigParser()
     cf.read("config.ini")
     for k, v in cf.items("urls"):
         l = v.split(',')
-        print(l[0], int(l[1])+10)
+        url_tasks.append(l)
 
-    # 线程队列
-    thread_queue = queue.Queue()
-    thread_num = 1
-    page = 20
-    for num in range(thread_num):
-        thread = RenderWork(num, base_url, page, thread_queue)
-        thread.start()
-
+    assign_thread_tasks(url_tasks)
     # start crawl process
     print("start crawl process")
     crawl_process = CrawlWork(crawl_tasks)

@@ -24,6 +24,7 @@ class RenderWork(threading.Thread):
     def run(self):
         self.init_web_engine()
         self.gen_url_task()
+        self.driver.close()
 
     def gen_url_task(self):
         for num in range(1, self.page+1):
@@ -35,6 +36,7 @@ class RenderWork(threading.Thread):
 
     def get_imgsrc_by_render(self, url):
         self.driver.set_page_load_timeout(60)
+        print("start get imgsrc_by_render {}".format(url))
         try:
             self.driver.get(url)
         except TimeoutException:
