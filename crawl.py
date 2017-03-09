@@ -16,7 +16,7 @@ class CrawlWork(Process):
             self.init_log()
             self.log.info("start log system")
             self.task_queue = task_queue
-            self.dst_path = "/home/beyondkoma/work/gitProject/webCrawl/images/"
+            self.dst_path = os.path.join(os.getcwd(), "images")
 
     def init_log(self):
         logging.basicConfig(level=logging.INFO,
@@ -39,16 +39,18 @@ class CrawlWork(Process):
             try:
                 (base_url, page, img_url) = self.task_queue.get_nowait()
                 self.log.info("the cur crawl info is {}, {}, {}".format(base_url, page, img_url))
-                await self.down_img_by_url(img_url, self.dst_path)
+                await self.down_img_by_url(base_url, img_url, self.dst_path)
             except queue.Empty:
                 await asyncio.sleep(3)
         return True
 
-    async def down_img_by_url(self, img_url, dst_path):
-        if not os.path.exists(dst_path):
-            os.mkdir(dst_path)
+    async def down_img_by_url(self, base_url, img_url, dst_path):
+        dirname = re.split("/|//", base_url)
+        target_path = os.path.join(self.dst_path, dirname[-1])
+        if not os.path.exists(target_path):
+            os.makedirs(target_path)
         filename = re.split("/|//", img_url)
-        osfile = dst_path + filename[len(filename)-1]
+        osfile = os.path.join(target_path, filename[-1])
         chunk_size = 1024
         try:
             async with aiohttp.ClientSession() as session:
