@@ -3,8 +3,7 @@
 from multiprocessing import Queue
 import queue
 import time
-import functools
-import ConfigParser
+import configparser
 
 
 from render import RenderWork
@@ -48,7 +47,7 @@ def assign_thread_tasks(url_tasks):
 if __name__ == '__main__':
     print("start crawl combic")
     url_tasks = []
-    cf = ConfigParser.ConfigParser()
+    cf = configparser.ConfigParser()
     cf.read("config.ini")
     for k, v in cf.items("urls"):
         l = v.split(',')
