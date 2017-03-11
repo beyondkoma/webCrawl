@@ -1,11 +1,11 @@
 # coding=utf-8
 
 from multiprocessing import Queue
-import threading
 import queue
 import time
 from datetime import datetime
 import configparser
+import json
 
 
 from render import RenderWork
@@ -31,9 +31,8 @@ def is_sub_thread_alive():
 
 def put_task_to_process(thread_queue):
     while not thread_queue.empty():
-        task_url = thread_queue.get()
-        print("the img is {}".format(task_url[2]))
-        crawl_tasks.put(task_url)
+        task_data = thread_queue.get()
+        crawl_tasks.put(task_data)
     return True
 
 
@@ -45,7 +44,8 @@ def manage_queue_task(thread_queue):
         if (end_time - start_time).total_seconds() > 3:
             if not is_sub_thread_alive():
                 put_task_to_process(thread_queue)
-                crawl_tasks.put(("undef", "undef", "undef"))
+                end_task = dict(base_url="undef", page=None, img_url=None)
+                crawl_tasks.put(json.dumps(end_task))
                 break
             else:
                 start_time = end_time

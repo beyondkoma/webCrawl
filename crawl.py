@@ -4,6 +4,7 @@ from multiprocessing import Process
 import logging
 import os
 import re
+import json
 import asyncio
 import queue
 
@@ -37,14 +38,14 @@ class CrawlWork(Process):
     async def process_crawl_tasks(self):
         while True:
             try:
-                (base_url, page, img_url) = self.task_queue.get_nowait()
-                self.log.info("the crawl base_url is {}".format(base_url))
-                if base_url == "undef":
+                json_str = self.task_queue.get_nowait()
+                img_task = json.loads(json_str)
+                self.log.info("the crawl task content is {}".format(img_task))
+                if img_task['base_url'] == "undef":
                     self.log.info("the crawl tasks has finished")
                     break
                 else:
-                    self.log.info("the cur crawl info is {}, {}, {}".format(base_url, page, img_url))
-                    await self.down_img_by_url(base_url, img_url, self.dst_path)
+                    await self.down_img_by_url(img_task['base_url'], img_task['img_url'], self.dst_path)
             except queue.Empty:
                 await asyncio.sleep(3)
         return True

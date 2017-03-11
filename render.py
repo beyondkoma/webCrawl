@@ -1,5 +1,6 @@
 # coding=utf-8
 
+import json
 
 from selenium.common.exceptions import TimeoutException
 from selenium import webdriver
@@ -32,7 +33,9 @@ class RenderWork(threading.Thread):
             new_url = self.url + '-' + str(num)
             img_url = self.get_imgsrc_by_render(new_url)
             if img_url:
-                self.work_queue.put((self.url, self.page, img_url))
+                print("get img_url ", img_url)
+                json_str = json.dumps(dict(base_url=self.url, page=self.page, img_url=img_url))
+                self.work_queue.put(json_str)
         return
 
     def get_imgsrc_by_render(self, url):
