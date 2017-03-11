@@ -25,6 +25,7 @@ class RenderWork(threading.Thread):
         self.init_web_engine()
         self.gen_url_task()
         self.driver.close()
+        print("cur thread continue")
 
     def gen_url_task(self):
         for num in range(1, self.page+1):

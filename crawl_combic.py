@@ -1,8 +1,10 @@
 # coding=utf-8
 
 from multiprocessing import Queue
+import threading
 import queue
 import time
+from datetime import datetime
 import configparser
 
 
@@ -11,36 +13,52 @@ from crawl import CrawlWork
 
 
 
-file_path = "/home/beyondkoma/work/gitProject/webCrawl/images/test.html"
-base_url = "http://v.comicbus.com/online/comic-103.html?ch=1"
-dst_path = "/home/beyondkoma/work/gitProject/webCrawl/images/"
-# page = 103
-
-# r = requests.post("http://v.comicbus.com/online/comic-103.html?ch=1", data={'id': 'next'})
-# r.encoding = 'big5'
-# with open(file_path, "w") as f:
-#         f.write(r.text)
-# img_url_tasks = Queue()
-
 # 进程队列
 crawl_tasks = Queue()
 # 线程队列
 thread_queue = queue.Queue()
 
+sub_threads = []
 
-def analyse_url(thread_queue):
+
+def is_sub_thread_alive():
+    # except main thread
+    for th in sub_threads:
+        if th.is_alive():
+            return True
+    return False
+
+
+def put_task_to_process(thread_queue):
+    while not thread_queue.empty():
+        task_url = thread_queue.get()
+        print("the img is {}".format(task_url[2]))
+        crawl_tasks.put(task_url)
+    return True
+
+
+# 每３秒检测子线程是否完成提取下载url任务
+def manage_queue_task(thread_queue):
+    start_time = datetime.now()
     while True:
-        while not thread_queue.empty():
-            task_url = thread_queue.get()
-            print("the img is {}".format(task_url[2]))
-            crawl_tasks.put(task_url)
-        time.sleep(1)
+        end_time = datetime.now()
+        if (end_time - start_time).total_seconds() > 3:
+            if not is_sub_thread_alive():
+                put_task_to_process(thread_queue)
+                crawl_tasks.put(("undef", "undef", "undef"))
+                break
+            else:
+                start_time = end_time
+                continue
+        put_task_to_process(thread_queue)
+        time.sleep(0.1)
 
 
-def assign_thread_tasks(url_tasks):
+def start_sub_render_thread(url_tasks):
     for num, cur_url_task in enumerate(url_tasks):
-        thread = RenderWork(num, cur_url_task[0], int(cur_url_task[1]), thread_queue)
-        thread.start()
+        m_thread = RenderWork(num, cur_url_task[0], int(cur_url_task[1]), thread_queue)
+        m_thread.start()
+        sub_threads.append(m_thread)
         print("start crawl thread {}, handle the combic url {}".format(num, cur_url_task[0]))
 
 
@@ -53,10 +71,11 @@ if __name__ == '__main__':
         l = v.split(',')
         url_tasks.append(l)
 
-    assign_thread_tasks(url_tasks)
+    start_sub_render_thread(url_tasks)
     # start crawl process
     print("start crawl process")
     crawl_process = CrawlWork(crawl_tasks)
     crawl_process.start()
-    analyse_url(thread_queue)
+    manage_queue_task(thread_queue)
+    print("wait crawl task finished")
     crawl_process.join()
