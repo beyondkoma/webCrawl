@@ -1,6 +1,6 @@
 # coding=utf-8
 
-from multiprocessing import Process
+from multiprocessing import Process, Queue
 import logging
 import os
 import re
@@ -70,6 +70,6 @@ class CrawlWork(Process):
                                 break
                             fd.write(chunk)
         except Exception:
-            self.log.info("download img {}happens exception".format(img_url))
+            self.log.info("download img {} ,happens exception".format(img_url))
             return False
         return True

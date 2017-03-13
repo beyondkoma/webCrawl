@@ -26,7 +26,7 @@ class RenderWork(threading.Thread):
         self.init_web_engine()
         self.gen_url_task()
         self.driver.close()
-        print("cur thread continue")
+        print("cur thread id:{}, has finished work".format(self.thread_id)
 
     def gen_url_task(self):
         for num in range(1, self.page+1):
@@ -52,7 +52,6 @@ class RenderWork(threading.Thread):
             for img_src in soup_html.find_all('img'):
                 if 'name' in img_src.attrs and img_src['name'] == 'TheImg':
                     if 'src' in img_src.attrs:
-                        print(img_src['src'])
                         return img_src['src']
                     else:
                         return None
