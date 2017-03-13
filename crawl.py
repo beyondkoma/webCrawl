@@ -14,10 +14,8 @@ import aiohttp
 class CrawlWork(Process):
     def __init__(self, task_queue):
             super(CrawlWork, self).__init__()
-            self.init_log()
-            self.log.info("start log system")
             self.task_queue = task_queue
-            self.dst_path = os.path.join(os.getcwd(), "images")
+            self.dst_path = "images/"
 
     def init_log(self):
         logging.basicConfig(level=logging.INFO,
@@ -29,6 +27,7 @@ class CrawlWork(Process):
         return
 
     def run(self):
+            self.init_log()
             self.log.info("start run log system")
             loop = asyncio.get_event_loop()
             task = asyncio.ensure_future(self.process_crawl_tasks())
@@ -52,7 +51,8 @@ class CrawlWork(Process):
 
     async def down_img_by_url(self, base_url, img_url, dst_path):
         dirname = re.split("/|//", base_url)
-        target_path = os.path.join(self.dst_path, dirname[-1])
+        # target_path = os.path.join(self.dst_path, dirname[-1])
+        target_path = self.dst_path + dirname[-1]
         if not os.path.exists(target_path):
             os.makedirs(target_path)
         filename = re.split("/|//", img_url)
