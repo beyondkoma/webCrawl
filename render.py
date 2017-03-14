@@ -10,13 +10,14 @@ import threading
 
 
 class RenderWork(threading.Thread):
-    def __init__(self, thread_id, url, page, work_queue):
+    def __init__(self, thread_id, url, page, path, work_queue):
         super(RenderWork, self).__init__()
         self.thread_id = thread_id
         self.url = url
         self.page = page
         self.work_queue = work_queue
         self.driver = None
+        self.path = path
 
     def init_web_engine(self):
         self.driver = webdriver.PhantomJS()
@@ -34,7 +35,7 @@ class RenderWork(threading.Thread):
             img_url = self.get_imgsrc_by_render(new_url)
             if img_url:
                 print("get img_url ", img_url)
-                json_str = json.dumps(dict(base_url=self.url, page=self.page, img_url=img_url))
+                json_str = json.dumps(dict(base_url=self.url, page=self.page, img_url=img_url, path=self.path))
                 self.work_queue.put(json_str)
         return
 

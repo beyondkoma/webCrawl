@@ -44,7 +44,7 @@ def manage_queue_task(thread_queue):
         if (end_time - start_time).total_seconds() > 3:
             if not is_sub_thread_alive():
                 put_task_to_process(thread_queue)
-                end_task = dict(base_url="undef", page=None, img_url=None)
+                end_task = dict(base_url="undef", page=None, img_url=None, path=None)
                 crawl_tasks.put(json.dumps(end_task))
                 break
             else:
@@ -56,7 +56,7 @@ def manage_queue_task(thread_queue):
 
 def start_sub_render_thread(url_tasks):
     for num, cur_url_task in enumerate(url_tasks):
-        m_thread = RenderWork(num, cur_url_task[0], int(cur_url_task[1]), thread_queue)
+        m_thread = RenderWork(num, cur_url_task[0], int(cur_url_task[1]), cur_url_task[2], thread_queue)
         m_thread.start()
         sub_threads.append(m_thread)
         print("start crawl thread {}, handle the combic url {}".format(num, cur_url_task[0]))
@@ -69,6 +69,7 @@ if __name__ == '__main__':
     cf.read("config.ini")
     for k, v in cf.items("urls"):
         l = v.split(',')
+        l.append(k)
         url_tasks.append(l)
 
     start_sub_render_thread(url_tasks)

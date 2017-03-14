@@ -15,7 +15,7 @@ class CrawlWork(Process):
     def __init__(self, task_queue):
             super(CrawlWork, self).__init__()
             self.task_queue = task_queue
-            self.dst_path = "images/"
+            self.dst_path = os.path.join(os.getcwd(), "images")
 
     def init_log(self):
         logging.basicConfig(level=logging.INFO,
@@ -44,7 +44,8 @@ class CrawlWork(Process):
                     self.log.info("the crawl tasks has finished")
                     break
                 else:
-                    await self.down_img_by_url(img_task['base_url'], img_task['img_url'], self.dst_path)
+                    cur_path = os.path.join(self.dst_path, img_task['path'])
+                    await self.down_img_by_url(img_task['base_url'], img_task['img_url'], cur_path)
             except queue.Empty:
                 await asyncio.sleep(3)
         return True
@@ -52,11 +53,11 @@ class CrawlWork(Process):
     async def down_img_by_url(self, base_url, img_url, dst_path):
         dirname = re.split("/|//", base_url)
         # target_path = os.path.join(self.dst_path, dirname[-1])
-        target_path = self.dst_path + dirname[-1]
-        if not os.path.exists(target_path):
-            os.makedirs(target_path)
+        # target_path = self.dst_path + dirname[-1]
+        if not os.path.exists(dst_path):
+            os.makedirs(dst_path)
         filename = re.split("/|//", img_url)
-        osfile = os.path.join(target_path, filename[-1])
+        osfile = os.path.join(dst_path, filename[-1])
         # headers = {
         #     'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:46.0) Gecko/20100101 Firefox/46.0',        }
         chunk_size = 1024
