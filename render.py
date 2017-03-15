@@ -3,6 +3,7 @@
 import json
 
 from selenium.common.exceptions import TimeoutException
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium import webdriver
 from bs4 import BeautifulSoup
 
@@ -20,13 +21,16 @@ class RenderWork(threading.Thread):
         self.path = path
 
     def init_web_engine(self):
-        self.driver = webdriver.PhantomJS()
+        dcap = dict(DesiredCapabilities.PHANTOMJS)
+        # 不载入图片，爬页面速度会快很多
+        dcap["phantomjs.page.settings.loadImages"] = False
+        self.driver = webdriver.PhantomJS(desired_capabilities=dcap)
         return
 
     def run(self):
         self.init_web_engine()
         self.gen_url_task()
-        self.driver.close()
+        self.driver.quit()
         print("cur thread id:{}, has finished work".format(self.thread_id))
 
     def gen_url_task(self):

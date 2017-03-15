@@ -30,11 +30,11 @@ class CrawlWork(Process):
             self.init_log()
             self.log.info("start run log system")
             loop = asyncio.get_event_loop()
-            task = asyncio.ensure_future(self.process_crawl_tasks())
+            task = asyncio.ensure_future(self.process_crawl_tasks(loop))
             loop.run_until_complete(task)
             self.log.info("CrawlWork ret:{}".format(task.result()))
 
-    async def process_crawl_tasks(self):
+    async def process_crawl_tasks(self, loop):
         while True:
             try:
                 json_str = self.task_queue.get_nowait()
@@ -45,12 +45,12 @@ class CrawlWork(Process):
                     break
                 else:
                     cur_path = os.path.join(self.dst_path, img_task['path'])
-                    await self.down_img_by_url(img_task['base_url'], img_task['img_url'], cur_path)
+                    await self.down_img_by_url(loop, img_task['base_url'], img_task['img_url'], cur_path)
             except queue.Empty:
                 await asyncio.sleep(3)
         return True
 
-    async def down_img_by_url(self, base_url, img_url, dst_path):
+    async def down_img_by_url(self, loop, base_url, img_url, dst_path):
         dirname = re.split("/|//", base_url)
         # target_path = os.path.join(self.dst_path, dirname[-1])
         # target_path = self.dst_path + dirname[-1]
@@ -58,11 +58,11 @@ class CrawlWork(Process):
             os.makedirs(dst_path)
         filename = re.split("/|//", img_url)
         osfile = os.path.join(dst_path, filename[-1])
-        # headers = {
-        #     'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:46.0) Gecko/20100101 Firefox/46.0',        }
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:46.0) Gecko/20100101 Firefox/46.0',        }
         chunk_size = 1024
         try:
-            async with aiohttp.ClientSession() as session:
+            async with aiohttp.ClientSession(loop=loop, headers=headers) as session:
                 async with session.get(img_url) as resp:
                     with open(osfile, 'wb') as fd:
                         while True:
